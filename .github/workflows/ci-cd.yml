@@ -39,11 +39,11 @@ jobs:
 
       - name: Run tests
         run: |
-          python -m pytest -v
+          python -m pytest -v 2>&1 | tee test-results.txt
 
       - name: Run automation
         run: |
-          python scripts/automation.py
+          python scripts/automation.py 2>&1 | tee automation-results.txt
 
       - name: Generate report
         run: |
@@ -73,3 +73,10 @@ jobs:
       - name: Deploy GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+     - name: Run AI analysis
+  if: always()
+  env:
+    OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    OPENAI_MODEL: gpt-5
+  run: |
+    python scripts/ai_analyzer.py
