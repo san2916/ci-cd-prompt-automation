@@ -45,7 +45,15 @@ jobs:
         run: |
           python scripts/automation.py 2>&1 | tee automation-results.txt
 
-      - name: Generate report
+      - name: Run AI analysis
+        if: ${{ !cancelled() }}
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: gpt-5
+        run: |
+          python scripts/ai_analyzer.py
+
+      - name: Generate dashboard and report
         run: |
           python scripts/generate_report.py
 
@@ -73,10 +81,3 @@ jobs:
       - name: Deploy GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-     - name: Run AI analysis
-  if: always()
-  env:
-    OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-    OPENAI_MODEL: gpt-5
-  run: |
-    python scripts/ai_analyzer.py
