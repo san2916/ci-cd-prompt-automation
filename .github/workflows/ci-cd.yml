@@ -4,26 +4,3 @@ permissions:
   id-token: write
   issues: write
   pull-requests: write
-
-name: CI/CD Prompt Automation
-
-on:
-  push:
-    branches:
-      - main
-
-  pull_request:
-    branches:
-      - main
-
-  schedule:
-    - cron: "0 */6 * * *"
-
-  workflow_dispatch:
-
-permissions:
-  contents: write
-  pages: write
-  id-token: write
-  issues: write
-  pull-requests: write
