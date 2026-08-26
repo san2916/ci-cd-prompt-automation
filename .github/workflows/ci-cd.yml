@@ -14,8 +14,13 @@ on:
 
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
-  test-and-automate:
+  test-and-build:
     runs-on: ubuntu-latest
 
     steps:
@@ -34,18 +39,36 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest -v
+          python -m pytest -v
 
       - name: Run automation
         run: |
           python scripts/automation.py
 
-      - name: Generate report
+      - name: Generate dashboard and report
         run: |
           python scripts/generate_report.py
 
-      - name: Upload report
+      - name: Upload report artifact
         uses: actions/upload-artifact@v4
         with:
           name: automation-report
-          path: reports/latest_report.md
+          path: reports/
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: reports/
+
+  deploy:
+    needs: test-and-build
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
