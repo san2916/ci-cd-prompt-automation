@@ -15,11 +15,9 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
-  issues: write
-  pull-requests: write
 
 jobs:
   test-and-build:
@@ -32,7 +30,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install dependencies
         run: |
@@ -47,41 +45,15 @@ jobs:
         run: |
           python scripts/automation.py
 
-      - name: Generate dashboard and report
+      - name: Generate report
         run: |
           python scripts/generate_report.py
 
-      - name: Upload report artifact
+      - name: Upload report
         uses: actions/upload-artifact@v4
         with:
           name: automation-report
           path: reports/
-
-      - name: Update Agile task - Success
-        if: success()
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.AGILE_TOKEN }}
-          script: |
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: 3,
-              body: 'CI/CD pipeline completed successfully. Agile status: DONE.'
-            });
-
-      - name: Update Agile task - Failure
-        if: failure()
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.AGILE_TOKEN }}
-          script: |
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: 3,
-              body: 'CI/CD pipeline failed. Agile status: BLOCKED. Please review the workflow logs.'
-            });
 
   deploy:
     needs: test-and-build
