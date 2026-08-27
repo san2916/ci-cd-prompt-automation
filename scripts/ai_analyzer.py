@@ -1,56 +1,50 @@
 import os
-from pathlib import Path
-from openai import OpenAI
-
 
 def analyze_results():
-    test_output = Path("test-results.txt").read_text(
-        errors="replace"
-    )
+    print("=== CI/CD AI Analysis ===")
 
-    automation_output = Path("automation-results.txt").read_text(
-        errors="replace"
-    )
+    api_key = os.getenv("OPENAI_API_KEY")
 
-    prompt = f"""
-You are a CI/CD automation assistant.
+    if not api_key:
+        print("OpenAI API key not available.")
+        print("Using local analysis instead.")
 
-Analyze the following CI/CD execution results.
+        try:
+            with open("automation-results.txt", "r") as f:
+                results = f.read()
 
-Determine:
+            print("\n=== Local Analysis Result ===")
 
-1. Overall pipeline status
-2. Test failures or errors
-3. Probable cause
-4. Recommended corrective actions
-5. Agile task status
+            if "error" in results.lower() or "failed" in results.lower():
+                print("Status: Issues detected in automation.")
+                print("Recommendation: Check the automation output for errors.")
+            else:
+                print("Status: Automation completed successfully.")
+                print("Recommendation: CI/CD pipeline can proceed.")
 
-Use these Agile statuses:
-- SUCCESS = Done
-- FAILURE = Blocked
+        except FileNotFoundError:
+            print("automation-results.txt not found.")
+            print("Status: Unable to analyze automation results.")
 
-Return a concise Markdown report.
+        return
 
-TEST RESULTS:
-{test_output}
+    print("OpenAI API key detected.")
+    print("Running OpenAI analysis...")
 
-AUTOMATION RESULTS:
-{automation_output}
-"""
+    from openai import OpenAI
 
-    client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+    client = OpenAI(api_key=api_key)
+
+    with open("automation-results.txt", "r") as f:
+        results = f.read()
 
     response = client.responses.create(
-        model=os.environ.get("OPENAI_MODEL", "gpt-5"),
-        input=prompt,
+        model=os.getenv("OPENAI_MODEL", "gpt-5"),
+        input=f"Analyze this CI/CD automation result:\n\n{results}"
     )
 
-    report = response.output_text
-
-    Path("reports/ai_report.md").write_text(report)
-
-    print("AI report generated successfully.")
-    print(report)
+    print("\n=== OpenAI Analysis ===")
+    print(response.output_text)
 
 
 if __name__ == "__main__":
